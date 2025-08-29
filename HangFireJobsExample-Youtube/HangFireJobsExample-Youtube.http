@@ -1,0 +1,6 @@
+@HangFireJobsExample_Youtube_HostAddress = http://localhost:5202
+
+GET {{HangFireJobsExample_Youtube_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
