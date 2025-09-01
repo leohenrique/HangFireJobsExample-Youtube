@@ -1,13 +1,12 @@
 ﻿using HangFireJobsExample_Youtube.Domain;
 using HangFireJobsExample_Youtube.Repositorio_NH;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Caching.Memory;
 using Serilog;
 using Serilog.Sinks.Graylog;
 using Serilog.Sinks.Graylog.Core.Transport;
 
-using Microsoft.Extensions.Caching.Memory;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 
 
 namespace HangFireJobsExample_Youtube.Controllers
@@ -19,14 +18,17 @@ namespace HangFireJobsExample_Youtube.Controllers
 
         private readonly UsuarioRepository _usuarioRepository;
         private readonly ContatoRepository _contatoRepository;
+        private readonly IMemoryCache _cache;
 
         public UsuarioController(
             UsuarioRepository usuarioRepo,
-            ContatoRepository contatoRepo
+            ContatoRepository contatoRepo,
+            IMemoryCache cache
             )
         {
             _usuarioRepository = usuarioRepo;
             _contatoRepository = contatoRepo;
+            _cache = cache;
 
         }
 
@@ -106,8 +108,27 @@ namespace HangFireJobsExample_Youtube.Controllers
         {
             try
             {
-                var usuarios = await _usuarioRepository.ListarTodosAsync();
-                return Ok(usuarios);
+                var usuariosCached = _cache.GetOrCreate("ListaUsuarios2", entrada =>
+                {
+                    var usuarios = _usuarioRepository.ListarTodosAsync();
+                    return usuarios;
+                });
+
+                return Ok(usuariosCached);                
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [HttpPost("invalidar-cache")]
+        public IActionResult InvalidarCache()
+        {
+            try
+            {
+                _cache.Remove("ListaUsuarios2");
+                return Ok(new { message = "Cache invalidado com sucesso." });
             }
             catch (Exception ex)
             {

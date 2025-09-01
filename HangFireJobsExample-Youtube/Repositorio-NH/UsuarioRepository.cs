@@ -1,10 +1,11 @@
 ﻿using HangFireJobsExample_Youtube.Domain;
+using HangFireJobsExample_Youtube.Repositorio_NH.Interfaces;
 using NHibernate;
 using NHibernate.Linq;
 
 namespace HangFireJobsExample_Youtube.Repositorio_NH
 {
-    public class UsuarioRepository
+    public class UsuarioRepository : IUsuarioRepository
     {
         private readonly NHibernate.ISession _session;
 

@@ -11,6 +11,10 @@ using Serilog;
 using Serilog.Sinks.Graylog;
 using Serilog.Sinks.Graylog.Core.Transport;
 
+using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using HangFireJobsExample_Youtube.Repositorio_NH.Interfaces;
 
 //// graylog - admin/admin
 
@@ -35,23 +39,25 @@ builder.Services.AddSwaggerGen(c =>
 builder.Services.AddHangfire(config => config.UseSqlServerStorage(connectionString));
 builder.Services.AddHangfireServer();
 
-
 var sessionFactory = NHibernateHelper.CreateSessionFactory();
 builder.Services.AddSingleton(sessionFactory);
 builder.Services.AddScoped(provider => sessionFactory.OpenSession());
-
 
 builder.Services.AddSingleton<IDbConnection>(sp => new Microsoft.Data.SqlClient.SqlConnection(connectionString));
 builder.Services.AddSingleton<IUserRepository, UserRepository>();
 
 /// Com NHibernate
-builder.Services.AddScoped<UsuarioRepository>();
-builder.Services.AddScoped<ContatoRepository>();
+builder.Services.AddScoped<IUsuarioRepository, UsuarioRepository>(); /// Uma única instância de UsuarioRepository será criada para toda a aplicação. Essa instância será reutilizada em todas as requisições e injeções.
+builder.Services.AddScoped<ContatoRepository>(); ///  Uma nova instância de ContatoRepository será criada para cada requisição HTTP.
 
-
+/////////// Memory Cache
+builder.Services.AddMemoryCache();
+//using IHost host = builder.Build();
 
 
 var app = builder.Build();
+IMemoryCache cache =
+    app.Services.GetRequiredService<IMemoryCache>();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -81,6 +87,8 @@ app.MapPost("usuarios/enfileirar", (IUserRepository userRepository, [FromBody] U
     return Results.Ok("Usuário enfileirado!");
 });
 
+
+//////////// Serilog
 var log = new LoggerConfiguration()
     .MinimumLevel.Debug()
     .WriteTo.Graylog(new GraylogSinkOptions

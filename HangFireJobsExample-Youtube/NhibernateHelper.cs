@@ -14,7 +14,7 @@ namespace HangFireJobsExample_Youtube
             return Fluently.Configure()
                 .Database(MsSqlConfiguration.MsSql2012
                     .ConnectionString(@"Server=localhost;Database=example_multi;Trusted_Connection=True;Encrypt=False;"))
-                .Mappings(m => m.FluentMappings.AddFromAssemblyOf<UsuarioMap>())
+                .Mappings(m => m.FluentMappings.AddFromAssemblyOf<UsuarioMap>())                
                 .BuildSessionFactory();
         }
     }
